@@ -2,19 +2,14 @@ const fs = require('fs/promises');
 const axios = require('axios');
 const express = require('express');
 
-// const { digitaCEP, digitaLOG } = require('./controllers/functions')
-
 const app = express();
 app.use(express.json());
 
-// app.get('/enderecos/:cep', digitaCEP);
-// app.get('/enderecos/:uf/:cidade/:logradouro', digitaLOG);
 
-app.get('/enderecos/:cep', async (req, res) => {
+async function digitaCEP(req, res) {
     const cep = req.params.cep;
-    console.log(cep);
     const cepConsulta = `${cep.substr(0, 5)}-${cep.substr(5, 3)}`
-    const enderecosDB = JSON.parse(await fs.readFile('./enderecos.json'));
+    const enderecosDB = JSON.parse(await fs.readFile('../enderecos.json'));
     const enderecoArquivo = enderecosDB.find(x => x.cep === cepConsulta);
 
     if (enderecoArquivo) {
@@ -25,7 +20,7 @@ app.get('/enderecos/:cep', async (req, res) => {
 
         if (responderCep.data && !responderCep.data.erro) {
             enderecosDB.push(responderCep.data);
-            await fs.writeFile('./enderecos.json', JSON.stringify(enderecosDB, null, 2));
+            await fs.writeFile('../enderecos.json', JSON.stringify(enderecosDB, null, 2));
             console.log('Encontrado no Via Cep. Busca feita em:', new Date());
             res.json(responderCep.data);
         } else {
@@ -34,12 +29,12 @@ app.get('/enderecos/:cep', async (req, res) => {
             console.log('Não encontrado nem no Via Cep. Busca feita em:', new Date());
         }
     }
-});
+}
 
-app.get('/enderecos/:uf/:cidade/:logradouro', async (req, res) => {
+async function digitaLOG(req, res) {
     const { uf, cidade, logradouro } = req.params;
 
-    const enderecosDB = JSON.parse(await fs.readFile('./enderecos-log.json'));
+    const enderecosDB = JSON.parse(await fs.readFile('../enderecos-log.json'));
     const enderecoArquivo = enderecosDB.find(x => x.logradouro.includes(logradouro));
 
     if (enderecoArquivo) {
@@ -54,7 +49,7 @@ app.get('/enderecos/:uf/:cidade/:logradouro', async (req, res) => {
             for (const endereco of catalogoEnderecos) {
                 enderecosDB.push(endereco);
             }
-            await fs.writeFile('./enderecos-log.json', JSON.stringify(enderecosDB, null, 2));
+            await fs.writeFile('../enderecos-log.json', JSON.stringify(enderecosDB, null, 2));
             console.log('Encontrado no Via Cep. Busca feita em:', new Date());
             res.json(catalogoEnderecos);
         } else {
@@ -63,6 +58,6 @@ app.get('/enderecos/:uf/:cidade/:logradouro', async (req, res) => {
             console.log('Não encontrado nem no Via Cep. Busca feita em:', new Date());
         }
     }
-});
+}
 
-app.listen(8000);
+module.exports = { digitaCEP, digitaLOG }
